@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production build outputs
+dist/
+build/
+.next/
+out/
+web-build/
+
+# Expo / React Native (Mobile)
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables (Crucial for preventing credentials leakage)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.example.local
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# IDE and Editor configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
