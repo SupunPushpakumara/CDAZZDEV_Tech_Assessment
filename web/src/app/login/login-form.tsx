@@ -25,6 +25,7 @@ export default function LoginForm() {
   const dispatch = useAppDispatch();
   const [authError, setAuthError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const {
     register,
@@ -42,6 +43,7 @@ export default function LoginForm() {
       const response = await apiClient.post('/auth/login', {
         email: data.email,
         password: data.password,
+        rememberMe,
       });
 
       const resData = response.data;
@@ -100,7 +102,19 @@ export default function LoginForm() {
             {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
           </div>
 
-
+          {/* Remember Me */}
+          <div className={styles.rememberRow}>
+            <label htmlFor="login-remember" className={styles.checkboxContainer}>
+              <input
+                id="login-remember"
+                type="checkbox"
+                className={styles.checkbox}
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span>Remember me</span>
+            </label>
+          </div>
 
           {/* Submit Button */}
           <button id="login-submit" type="submit" className={styles.button} disabled={submitting}>
