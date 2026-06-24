@@ -108,11 +108,29 @@ export class AuthService {
   }
 
   async logout(userId: string) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshTokenHash: null },
-    });
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { refreshTokenHash: null },
+      });
+    } catch (error) {
+      // Gracefully ignore if user record is not found (e.g. database reseeded)
+    }
     return { success: true };
+  }
+
+  async getAllUsers() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
   }
 
   private async generateTokens(userId: string, email: string, role: string, name: string) {

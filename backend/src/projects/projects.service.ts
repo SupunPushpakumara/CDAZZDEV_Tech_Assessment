@@ -44,20 +44,47 @@ export class ProjectsService {
   }
 
   async create(dto: CreateProjectDto, ownerId: string) {
+    const memberIds = Array.from(new Set(dto.memberIds || [])).filter(id => id !== ownerId);
+
     return this.prisma.project.create({
       data: {
         name: dto.name,
         description: dto.description,
         ownerId,
         members: {
-          create: {
-            userId: ownerId,
-            role: 'MANAGER',
-          },
+          create: [
+            {
+              userId: ownerId,
+              role: 'MANAGER',
+            },
+            ...memberIds.map((userId) => ({
+              userId,
+              role: 'MEMBER' as const,
+            })),
+          ],
         },
       },
       include: {
-        members: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        },
       },
     });
   }

@@ -4,6 +4,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { GetTasksQueryDto } from './dto/get-tasks-query.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { Role, ProjectRole } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
@@ -42,7 +43,7 @@ export class TasksService {
     });
   }
 
-  async findAll(projectId: string, query: GetTasksQueryDto) {
+  async findAll(projectId: string, query: GetTasksQueryDto, user: any) {
     const { status, priority, assigneeId, page, limit, sortBy, sortOrder } = query;
     const skip = (page - 1) * limit;
 
@@ -54,8 +55,29 @@ export class TasksService {
     if (priority) {
       where.priority = priority;
     }
-    if (assigneeId) {
-      where.assigneeId = assigneeId;
+
+    // Enforce that project members can only see their own tasks
+    if (user.role !== Role.ADMIN) {
+      const membership = await this.prisma.projectMember.findUnique({
+        where: {
+          projectId_userId: {
+            projectId,
+            userId: user.sub,
+          },
+        },
+      });
+
+      if (membership?.role === ProjectRole.MEMBER) {
+        where.assigneeId = user.sub;
+      } else {
+        if (assigneeId) {
+          where.assigneeId = assigneeId;
+        }
+      }
+    } else {
+      if (assigneeId) {
+        where.assigneeId = assigneeId;
+      }
     }
 
     const [tasks, total] = await Promise.all([

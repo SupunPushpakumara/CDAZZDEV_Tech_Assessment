@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -50,5 +50,14 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   logout(@CurrentUser('sub') userId: string) {
     return this.authService.logout(userId);
+  }
+
+  @Get('users')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get all registered users' })
+  @ApiResponse({ status: 200, description: 'List of users returned.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  findAllUsers() {
+    return this.authService.getAllUsers();
   }
 }

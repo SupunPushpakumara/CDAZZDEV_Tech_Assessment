@@ -1,0 +1,52 @@
+.header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-24);
+  background: rgba(11, 15, 25, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-16);
+}
+
+.menuButton {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: var(--spacing-4);
+  border-radius: var(--radius-button);
+}
+
+.menuButton:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.projectName {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* On mobile viewports (< 768px), display hamburger trigger */
+@media (max-width: 768px) {
+  .menuButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .header {
+    padding: 0 var(--spacing-16);
+  }
+}

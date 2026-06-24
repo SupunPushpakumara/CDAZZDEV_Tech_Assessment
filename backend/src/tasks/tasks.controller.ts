@@ -24,8 +24,9 @@ export class TasksController {
   findAll(
     @Param('id') projectId: string,
     @Query() query: GetTasksQueryDto,
+    @CurrentUser() user: any,
   ) {
-    return this.tasksService.findAll(projectId, query);
+    return this.tasksService.findAll(projectId, query, user);
   }
 
   @Post('projects/:id/tasks')

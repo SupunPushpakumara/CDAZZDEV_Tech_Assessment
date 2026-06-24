@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-teamsync}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -24,10 +24,10 @@ services:
     container_name: teamsync-api
     restart: always
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     environment:
-      PORT: 3000
-      NODE_ENV: production
+      PORT: ${PORT:-3000}
+      NODE_ENV: ${NODE_ENV:-production}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-teamsync}?schema=public
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-super_secret_access_key_12345}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-super_secret_refresh_key_12345}
@@ -36,5 +36,22 @@ services:
         condition: service_healthy
     command: sh -c "npx prisma migrate deploy && node prisma/seed.js && node dist/src/main"
 
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: teamsync-web
+    restart: always
+    ports:
+      - "${WEB_PORT:-3001}:${WEB_PORT:-3001}"
+    environment:
+      PORT: ${WEB_PORT:-3001}
+      BACKEND_URL: ${BACKEND_URL:-http://api:3000}
+    depends_on:
+      api:
+        condition: service_started
+
 volumes:
   postgres_data:
+
+

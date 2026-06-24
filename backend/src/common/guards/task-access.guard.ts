@@ -54,6 +54,14 @@ export class TaskAccessGuard implements CanActivate {
       throw new ForbiddenException('Access Denied. You do not belong to the project containing this task.');
     }
 
+    // Enforce that project members can only see or modify their own assigned tasks
+    if (membership.role === ProjectRole.MEMBER) {
+      const isAssignee = task.assigneeId === user.sub;
+      if (!isAssignee) {
+        throw new ForbiddenException('Access Denied. You can only view or modify your own tasks.');
+      }
+    }
+
     // Restrict task updates (PATCH/PUT/DELETE) to: Assignee, Project Manager, or Admin (bypassed above)
     const isWriteAction = ['PATCH', 'PUT', 'DELETE'].includes(request.method);
     if (isWriteAction) {

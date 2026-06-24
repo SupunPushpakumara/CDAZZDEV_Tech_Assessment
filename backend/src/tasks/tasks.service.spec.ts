@@ -47,7 +47,7 @@ describe('TasksService', () => {
       mockPrisma.task.findMany.mockResolvedValue([]);
       mockPrisma.task.count.mockResolvedValue(12);
 
-      const result = await service.findAll(projectId, query);
+      const result = await service.findAll(projectId, query, { role: 'ADMIN' });
 
       expect(mockPrisma.task.findMany).toHaveBeenCalledWith({
         where: { projectId },
@@ -84,7 +84,7 @@ describe('TasksService', () => {
       mockPrisma.task.findMany.mockResolvedValue([]);
       mockPrisma.task.count.mockResolvedValue(1);
 
-      await service.findAll(projectId, query);
+      await service.findAll(projectId, query, { role: 'ADMIN' });
 
       expect(mockPrisma.task.findMany).toHaveBeenCalledWith({
         where: {

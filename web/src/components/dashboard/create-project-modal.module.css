@@ -1,0 +1,246 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 90%;
+  max-width: 450px;
+  padding: var(--spacing-24);
+  border-radius: var(--radius-card);
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-24);
+}
+
+.headerTitle {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  padding: 10px;
+  color: #fff;
+  outline: none;
+  font-size: 14px;
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+}
+
+.textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  padding: 10px;
+  color: #fff;
+  outline: none;
+  font-size: 14px;
+  resize: none;
+  transition: border-color var(--transition-fast);
+}
+
+.textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.errorBorder {
+  border-color: var(--color-danger);
+}
+
+.errorText {
+  color: var(--color-danger);
+  font-size: 12px;
+}
+
+.formError {
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-12);
+  margin-top: var(--spacing-12);
+}
+
+.cancelButton {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: 8px 16px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background var(--transition-fast);
+}
+
+.cancelButton:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.submitButton {
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-button);
+  padding: 8px 16px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  transition: background var(--transition-fast);
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.labelWithIcon {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.loaderContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  padding: var(--spacing-8) 0;
+}
+
+.emptyText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: var(--spacing-8) 0;
+}
+
+.membersList {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding: var(--spacing-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.memberItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-8);
+  border-radius: var(--radius-input);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.memberItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.memberInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.memberName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.memberEmail {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.roleBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.roleBadge.admin {
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.15);
+}
+
+.roleBadge.manager {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.roleBadge.member {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+}

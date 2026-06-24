@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateProjectDto {
   @ApiProperty({ example: 'TeamSync App Development', description: 'The name of the project' })
@@ -15,4 +15,15 @@ export class CreateProjectDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiProperty({
+    example: ['user-uuid-1', 'user-uuid-2'],
+    description: 'The IDs of the members to add to the project',
+    required: false,
+    type: [String],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  memberIds?: string[];
 }
