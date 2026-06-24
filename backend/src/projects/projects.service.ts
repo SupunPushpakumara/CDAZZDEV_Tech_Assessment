@@ -6,15 +6,19 @@ import { CreateProjectDto } from './dto/create-project.dto';
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(userId: string) {
+  async findAll(userId: string, role?: string) {
+    const isAdmin = role === 'ADMIN';
+
     return this.prisma.project.findMany({
-      where: {
-        members: {
-          some: {
-            userId,
+      where: isAdmin
+        ? undefined
+        : {
+            members: {
+              some: {
+                userId,
+              },
+            },
           },
-        },
-      },
       include: {
         owner: {
           select: {

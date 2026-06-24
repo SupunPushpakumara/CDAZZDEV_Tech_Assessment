@@ -18,8 +18,11 @@ export class ProjectsController {
   @Get()
   @ApiOperation({ summary: 'Get all projects the authenticated user belongs to' })
   @ApiResponse({ status: 200, description: 'List of project memberships returned.' })
-  findAll(@CurrentUser('sub') userId: string) {
-    return this.projectsService.findAll(userId);
+  findAll(
+    @CurrentUser('sub') userId: string,
+    @CurrentUser('role') role: Role,
+  ) {
+    return this.projectsService.findAll(userId, role);
   }
 
   @Post()
