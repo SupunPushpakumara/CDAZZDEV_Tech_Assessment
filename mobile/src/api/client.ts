@@ -31,6 +31,9 @@ export function decodeJwt(token: string) {
 
 // Dynamically resolve Backend Endpoint depending on Platform Executing
 export const getBaseUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
   if (Platform.OS === 'android') {
     // Android emulator loops back to localhost via 10.0.2.2
     return 'http://10.0.2.2:3000';
@@ -40,6 +43,7 @@ export const getBaseUrl = () => {
 };
 
 export const API_BASE_URL = getBaseUrl();
+console.log('📡 Mobile API Client initialized with base URL:', API_BASE_URL);
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const token = await SecureStore.getItemAsync('accessToken');
