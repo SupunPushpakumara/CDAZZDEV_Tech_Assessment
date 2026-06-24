@@ -15,7 +15,7 @@ import { useAuth } from '../store/authContext';
 import { apiFetch } from '../api/client';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getCachedTaskDetails, setCachedTaskDetails, getCachedTasks } from '../store/taskCache';
+import { getCachedTaskDetails, setCachedTaskDetails, getCachedTasks, setCachedTasks } from '../store/taskCache';
 import { OfflineBanner } from '../components/OfflineBanner';
 
 interface TaskDetailScreenProps {
@@ -141,11 +141,21 @@ export const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ route, navig
 
     const originalStatus = task.status;
     
-    // Optimistically update the UI status
+    // Optimistically update the UI status and the local cache
     setTask({ ...task, status: newStatus });
     setStatusUpdating(true);
 
     try {
+      // Update details cache optimistically
+      await setCachedTaskDetails(taskId, { ...task, status: newStatus });
+
+      // Update list cache optimistically
+      const cachedTasks = await getCachedTasks();
+      const updatedTasks = cachedTasks.map((t) =>
+        t.id === taskId ? { ...t, status: newStatus } : t
+      );
+      await setCachedTasks(updatedTasks);
+
       const response = await apiFetch(`/tasks/${taskId}`, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus }),
@@ -156,11 +166,28 @@ export const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ route, navig
       }
 
       const updatedTask = await response.json();
-      // Sync local task with complete updated payload (preserving comments)
-      setTask((prev) => prev ? { ...prev, status: updatedTask.status } : null);
+      // Sync local task with complete updated payload (preserving comments) and save to cache
+      setTask((prev) => {
+        if (!prev) return null;
+        const nextTask = { ...prev, status: updatedTask.status };
+        setCachedTaskDetails(taskId, nextTask);
+        return nextTask;
+      });
     } catch (err) {
       // Rollback on failure
-      setTask((prev) => prev ? { ...prev, status: originalStatus } : null);
+      setTask((prev) => {
+        if (!prev) return null;
+        const nextTask = { ...prev, status: originalStatus };
+        setCachedTaskDetails(taskId, nextTask);
+        return nextTask;
+      });
+
+      const cachedTasks = await getCachedTasks();
+      const rolledBackTasks = cachedTasks.map((t) =>
+        t.id === taskId ? { ...t, status: originalStatus } : t
+      );
+      await setCachedTasks(rolledBackTasks);
+
       Alert.alert('Error', 'Could not update task status. Please try again.');
     } finally {
       setStatusUpdating(false);
@@ -332,7 +359,7 @@ export const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ route, navig
 
           {/* Comments Section */}
           <View style={styles.commentsSection}>
-            <Text style={styles.sectionTitle}>Discussion ({task.comments.length})</Text>
+            <Text style={styles.sectionTitle}>Comments ({task.comments.length})</Text>
 
             {task.comments.length === 0 ? (
               <View style={styles.emptyComments}>
@@ -375,7 +402,7 @@ export const TaskDetailScreen: React.FC<TaskDetailScreenProps> = ({ route, navig
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder={netInfo.isConnected === false ? "Cannot comment offline" : "Add to the discussion..."}
+            placeholder={netInfo.isConnected === false ? "Cannot comment offline" : "Add a comment..."}
             placeholderTextColor="#64748B"
             value={commentText}
             onChangeText={setCommentText}

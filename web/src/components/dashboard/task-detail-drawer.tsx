@@ -213,7 +213,7 @@ export function TaskDetailDrawer({ taskId }: TaskDetailDrawerProps) {
             <div className={styles.discussionSection}>
               <div className={styles.discussionHeader}>
                 <MessageSquare size={16} />
-                <span style={{ fontWeight: 600 }}>Discussion Feed ({task.comments.length})</span>
+                <span style={{ fontWeight: 600 }}>Comments Feed ({task.comments.length})</span>
               </div>
 
               {/* Scrollable feed */}

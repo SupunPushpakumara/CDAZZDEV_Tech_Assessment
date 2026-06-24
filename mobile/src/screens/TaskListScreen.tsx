@@ -15,6 +15,7 @@ import { getCachedTasks, setCachedTasks, CachedTask } from '../store/taskCache';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 
 type StatusFilter = 'ALL' | 'TODO' | 'IN_PROGRESS' | 'DONE';
 
@@ -100,12 +101,34 @@ export const TaskListScreen: React.FC<TaskListScreenProps> = ({ navigation }) =>
     }
   }, [user, netInfo.isConnected]);
 
-  useEffect(() => {
-    // Initial fetch when connection state is resolved
-    if (netInfo.isConnected !== null) {
-      fetchTasks();
-    }
-  }, [netInfo.isConnected, fetchTasks]);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const refresh = async () => {
+        // Load from cache first for immediate feedback (e.g. returning from details with updated status)
+        const cached = await getCachedTasks();
+        if (active) {
+          setTasks(cached);
+        }
+
+        // Silent background fetch if online
+        if (netInfo.isConnected !== false) {
+          if (active) {
+            await fetchTasks(true);
+          }
+        }
+      };
+
+      if (netInfo.isConnected !== null) {
+        refresh();
+      }
+
+      return () => {
+        active = false;
+      };
+    }, [netInfo.isConnected, fetchTasks])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -195,7 +218,7 @@ export const TaskListScreen: React.FC<TaskListScreenProps> = ({ navigation }) =>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <OfflineBanner />
       
       {/* Header bar */}
