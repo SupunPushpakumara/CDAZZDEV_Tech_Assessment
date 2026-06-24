@@ -45,6 +45,31 @@ export const getBaseUrl = () => {
 export const API_BASE_URL = getBaseUrl();
 console.log('📡 Mobile API Client initialized with base URL:', API_BASE_URL);
 
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string } | null> | null = null;
+
+async function performSilentRefresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null> {
+  try {
+    const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (refreshResponse.ok) {
+      const tokens = await refreshResponse.json();
+      await SecureStore.setItemAsync('accessToken', tokens.accessToken);
+      await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
+      return tokens;
+    }
+    return null;
+  } catch (err) {
+    console.error('Silent token refresh failed:', err);
+    return null;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
 export async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const token = await SecureStore.getItemAsync('accessToken');
 
@@ -67,27 +92,17 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
     const refreshToken = await SecureStore.getItemAsync('refreshToken');
     if (refreshToken) {
       console.log('🔄 Mobile client: Access token expired. Attempting rotation refresh...');
-      try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
+      if (!refreshPromise) {
+        refreshPromise = performSilentRefresh(refreshToken);
+      }
+      const tokens = await refreshPromise;
+      if (tokens) {
+        // Retry the failed transaction with the new access token
+        headers['Authorization'] = `Bearer ${tokens.accessToken}`;
+        response = await fetch(`${API_BASE_URL}${endpoint}`, {
+          ...options,
+          headers,
         });
-
-        if (refreshResponse.ok) {
-          const tokens = await refreshResponse.json();
-          await SecureStore.setItemAsync('accessToken', tokens.accessToken);
-          await SecureStore.setItemAsync('refreshToken', tokens.refreshToken);
-
-          // Retry the failed transaction with the new access token
-          headers['Authorization'] = `Bearer ${tokens.accessToken}`;
-          response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            ...options,
-            headers,
-          });
-        }
-      } catch (err) {
-        console.error('Silent token refresh failed:', err);
       }
     }
   }

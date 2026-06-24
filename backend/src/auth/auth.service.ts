@@ -88,7 +88,31 @@ export class AuthService {
         throw new UnauthorizedException('Access Denied. Invalid session.');
       }
 
-      const isMatch = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+      let currentHash = user.refreshTokenHash;
+      let oldHash = '';
+      let rotationTimestamp = 0;
+
+      if (user.refreshTokenHash.includes('|')) {
+        const parts = user.refreshTokenHash.split('|');
+        currentHash = parts[0];
+        oldHash = parts[1] || '';
+        rotationTimestamp = parseInt(parts[2], 10) || 0;
+      }
+
+      let isMatch = await bcrypt.compare(refreshToken, currentHash);
+      let isGracePeriodMatch = false;
+
+      if (!isMatch && oldHash) {
+        isGracePeriodMatch = await bcrypt.compare(refreshToken, oldHash);
+        if (isGracePeriodMatch) {
+          const timeElapsed = Date.now() - rotationTimestamp;
+          const gracePeriodMs = 15000; // 15 seconds grace period
+          if (timeElapsed < gracePeriodMs) {
+            isMatch = true;
+          }
+        }
+      }
+
       if (!isMatch) {
         // Reuse detection: Compromised session. Remove token hash to revoke all sessions
         await this.prisma.user.update({
@@ -99,10 +123,16 @@ export class AuthService {
       }
 
       const tokens = await this.generateTokens(user.id, user.email, user.role, user.name);
-      await this.updateRefreshToken(user.id, tokens.refreshToken);
+      
+      const previousHashToStore = isGracePeriodMatch ? oldHash : currentHash;
+      const timestampToStore = isGracePeriodMatch ? rotationTimestamp : Date.now();
+      await this.updateRefreshToken(user.id, tokens.refreshToken, previousHashToStore, timestampToStore);
 
       return tokens;
     } catch (e) {
+      if (e instanceof UnauthorizedException) {
+        throw e;
+      }
       throw new UnauthorizedException('Invalid or expired refresh token.');
     }
   }
@@ -154,11 +184,12 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async updateRefreshToken(userId: string, refreshToken: string) {
+  private async updateRefreshToken(userId: string, refreshToken: string, oldHash: string = '', timestamp: number = Date.now()) {
     const hash = await bcrypt.hash(refreshToken, 10);
+    const storedValue = oldHash ? `${hash}|${oldHash}|${timestamp}` : hash;
     await this.prisma.user.update({
       where: { id: userId },
-      data: { refreshTokenHash: hash },
+      data: { refreshTokenHash: storedValue },
     });
   }
 }

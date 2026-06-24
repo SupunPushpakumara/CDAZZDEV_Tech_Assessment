@@ -197,6 +197,64 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('rotated-access-token');
       expect(result.refreshToken).toBe('rotated-refresh-token');
     });
+
+    it('should rotate tokens and return new pair if refresh token matches old hash and is within grace period', async () => {
+      const now = Date.now();
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: 'user-1' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'MEMBER',
+        name: 'Test',
+        refreshTokenHash: `new-hash|old-hash|${now - 5000}`, // Rotated 5s ago (within 15s grace period)
+      });
+      // Mock bcrypt compare: matches old hash, not current hash
+      (bcrypt.compare as jest.Mock)
+        .mockResolvedValueOnce(false) // current-hash comparison
+        .mockResolvedValueOnce(true);  // old-hash comparison
+      (bcrypt.hash as jest.Mock).mockResolvedValue('rotated-hash');
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('rotated-access-token')
+        .mockResolvedValueOnce('rotated-refresh-token');
+      mockPrisma.user.update.mockResolvedValue({});
+
+      const result = await service.refresh('old-valid-token-in-grace-period');
+
+      expect(result.accessToken).toBe('rotated-access-token');
+      expect(result.refreshToken).toBe('rotated-refresh-token');
+      // Should write new-hash|old-hash|timestamp (preserving original old-hash and timestamp)
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { refreshTokenHash: `rotated-hash|old-hash|${now - 5000}` },
+      });
+    });
+
+    it('should throw and clear hash if refresh token matches old hash but is outside grace period', async () => {
+      const now = Date.now();
+      mockJwtService.verifyAsync.mockResolvedValue({ sub: 'user-1' });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'MEMBER',
+        name: 'Test',
+        refreshTokenHash: `new-hash|old-hash|${now - 20000}`, // Rotated 20s ago (outside 15s grace period)
+      });
+      // Mock bcrypt compare: matches old hash, not current hash
+      (bcrypt.compare as jest.Mock)
+        .mockResolvedValueOnce(false) // current-hash comparison
+        .mockResolvedValueOnce(true);  // old-hash comparison
+      mockPrisma.user.update.mockResolvedValue({});
+
+      await expect(service.refresh('old-expired-token-outside-grace-period')).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      // Should have cleared hash
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { refreshTokenHash: null },
+      });
+    });
   });
 
   describe('logout', () => {
